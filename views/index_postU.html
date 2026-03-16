@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Usuario</title>
+  <style>
+    /* Reset básico */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
+    }
+
+    body {
+      background: #f4f7f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 40px 50px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 350px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 15px;
+      color: #555;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border 0.3s;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #5db6ff;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background-color: #2b91fe;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+      transform: translateY(-3px);
+    }
+
+    .alert {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 500;
+      display: none;
+    }
+
+    .alert.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .alert.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Registrar Usuario</h1>
+    <form id="formUsuario">
+      <label>Usuario:
+        <input type="text" id="username" placeholder="Ingrese el usuario" required>
+      </label>
+      <label>Contraseña:
+        <input type="password" id="password" placeholder="Ingrese la contraseña" required>
+      </label>
+      <button type="submit">Guardar</button>
+      <div id="alert" class="alert"></div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById("formUsuario");
+    const alertBox = document.getElementById("alert");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const nuevoUsuario = {
+        username: document.getElementById("username").value,
+        password: document.getElementById("password").value
+      };
+
+      try {
+        const res = await fetch("/api/usuarios", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(nuevoUsuario)
+        });
+
+        const data = await res.json();
+
+        if(res.ok) {
+          alertBox.textContent = `Usuario registrado correctamente: ${data.username}`;
+          alertBox.className = "alert success";
+          form.reset();
+        } else {
+          alertBox.textContent = `Error al registrar: ${data.message || "Verifique los datos"}`;
+          alertBox.className = "alert error";
+        }
+        alertBox.style.display = "block";
+      } catch(err) {
+        alertBox.textContent = `Error de conexión: ${err}`;
+        alertBox.className = "alert error";
+        alertBox.style.display = "block";
+      }
+    });
+  </script>
+
+</body>
+</html>
+

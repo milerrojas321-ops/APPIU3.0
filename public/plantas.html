@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Explorar Plantas | Appiu</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
+}
+
+body{
+background:#f4f6f9;
+}
+
+/* HEADER */
+
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 40px;
+background:white;
+border-bottom:1px solid #ddd;
+}
+
+.logo{
+font-size:1.6rem;
+font-weight:bold;
+color:#ff2a7f;
+}
+
+nav a{
+margin-left:20px;
+text-decoration:none;
+font-weight:bold;
+color:#333;
+}
+
+nav a:hover{
+color:#ff2a7f;
+}
+
+/* BUSCADOR */
+
+.search-box{
+text-align:center;
+margin-top:40px;
+}
+
+.search-box input{
+
+width:400px;
+padding:12px;
+border-radius:25px;
+border:1px solid #ccc;
+outline:none;
+font-size:16px;
+
+}
+
+/* GRID */
+
+.grid{
+
+margin-top:40px;
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+gap:20px;
+padding:40px;
+
+}
+
+/* CARD */
+
+.card{
+
+background:white;
+border-radius:12px;
+overflow:hidden;
+box-shadow:0 5px 15px rgba(0,0,0,.1);
+cursor:pointer;
+transition:.3s;
+
+}
+
+.card:hover{
+
+transform:translateY(-5px);
+
+}
+
+.card img{
+
+width:100%;
+height:180px;
+object-fit:cover;
+
+}
+
+.card h3{
+
+padding:15px;
+
+}
+
+/* MODAL */
+
+.modal{
+
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,.6);
+display:none;
+justify-content:center;
+align-items:center;
+
+}
+
+.modal-content{
+
+background:white;
+width:500px;
+border-radius:12px;
+padding:20px;
+
+}
+
+.modal-content img{
+
+width:100%;
+border-radius:10px;
+
+}
+
+.close{
+
+float:right;
+font-size:22px;
+cursor:pointer;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">🌸 Appiu</div>
+
+<nav>
+
+<a href="menu.html">Inicio</a>
+<a href="publicar.html">Publicar</a>
+<a href="perfil.html">Perfil</a>
+
+</nav>
+
+</header>
+
+
+<div class="search-box">
+
+<h2>🔎 Buscar plantas</h2>
+
+<input type="text" id="buscar" placeholder="Buscar planta..." onkeyup="filtrar()">
+
+</div>
+
+
+<div class="grid" id="grid"></div>
+
+
+<!-- MODAL -->
+
+<div class="modal" id="modal">
+
+<div class="modal-content">
+
+<span class="close" onclick="cerrar()">✖</span>
+
+<h2 id="modalTitulo"></h2>
+
+<img id="modalImg">
+
+<p id="modalInfo"></p>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* BASE DE DATOS DE PLANTAS */
+
+const plantas=[
+
+{
+nombre:"Monstera",
+imagen:"https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
+info:"La Monstera es una planta tropical muy popular. Necesita luz indirecta y riego moderado."
+},
+
+{
+nombre:"Lavanda",
+imagen:"https://images.unsplash.com/photo-1504198453319-5ce911bafcde",
+info:"La lavanda es una planta aromática conocida por su olor relajante y propiedades medicinales."
+},
+
+{
+nombre:"Aloe Vera",
+imagen:"https://images.unsplash.com/photo-1524593119773-9c6c8b5c02d2",
+info:"El Aloe Vera es famoso por sus propiedades curativas para la piel."
+},
+
+{
+nombre:"Orquídea",
+imagen:"https://images.unsplash.com/photo-1446071103084-c257b5f70672",
+info:"Las orquídeas son plantas ornamentales elegantes que requieren humedad y luz indirecta."
+},
+
+{
+nombre:"Bambú",
+imagen:"https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
+info:"El bambú es símbolo de prosperidad y crece rápido en ambientes húmedos."
+},
+
+{
+nombre:"Cactus",
+imagen:"https://images.unsplash.com/photo-1524593119773-9c6c8b5c02d2",
+info:"El cactus necesita muy poca agua y es perfecto para climas secos."
+}
+
+];
+
+
+/* CARGAR PLANTAS */
+
+function cargar(){
+
+const grid=document.getElementById("grid");
+
+grid.innerHTML="";
+
+plantas.forEach(p=>{
+
+grid.innerHTML+=`
+
+<div class="card" onclick="verPlanta('${p.nombre}')">
+
+<img src="${p.imagen}">
+
+<h3>${p.nombre}</h3>
+
+</div>
+
+`;
+
+});
+
+}
+
+cargar();
+
+
+/* BUSCADOR */
+
+function filtrar(){
+
+let texto=document.getElementById("buscar").value.toLowerCase();
+
+const cards=document.querySelectorAll(".card");
+
+cards.forEach(card=>{
+
+let nombre=card.innerText.toLowerCase();
+
+card.style.display=nombre.includes(texto)?"block":"none";
+
+});
+
+}
+
+
+/* VER INFO */
+
+function verPlanta(nombre){
+
+const planta=plantas.find(p=>p.nombre===nombre);
+
+document.getElementById("modalTitulo").innerText=planta.nombre;
+
+document.getElementById("modalImg").src=planta.imagen;
+
+document.getElementById("modalInfo").innerText=planta.info;
+
+document.getElementById("modal").style.display="flex";
+
+}
+
+function cerrar(){
+
+document.getElementById("modal").style.display="none";
+
+}
+
+</script>
+
+</body>
+</html>

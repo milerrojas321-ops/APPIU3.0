@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Appiu</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family: 'Segoe UI', sans-serif;
+}
+
+body{
+background:#fafafa;
+}
+
+/* HEADER */
+
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 40px;
+background:white;
+border-bottom:1px solid #ddd;
+position:sticky;
+top:0;
+z-index:10;
+}
+
+.logo{
+font-size:1.7rem;
+font-weight:bold;
+color:#ff2a7f;
+}
+
+/* NAVBAR */
+
+nav ul{
+display:flex;
+list-style:none;
+gap:25px;
+}
+
+nav a{
+text-decoration:none;
+color:#333;
+font-weight:600;
+transition:.2s;
+}
+
+nav a:hover{
+color:#ff2a7f;
+}
+
+/* BOTON DE EXPLORAR PLANTA */
+
+.btn{
+display:inline-block;
+margin-top:15px;
+padding:10px 20px;
+border-radius:8px;
+background:#ff2a7f;
+color:white;
+font-weight:bold;
+text-decoration:none;
+transition:.2s;
+}
+
+.btn:hover{
+background:#e91e63;
+}
+
+/* CONTENEDOR PRINCIPAL */
+
+.container{
+display:grid;
+grid-template-columns: 250px 1fr 250px;
+gap:30px;
+padding:30px;
+}
+
+/* SIDEBAR PERFIL */
+
+.sidebar{
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,.05);
+text-align:center;
+height:fit-content;
+}
+
+.profile-img{
+width:80px;
+height:80px;
+border-radius:50%;
+object-fit:cover;
+margin-bottom:10px;
+}
+
+.username{
+font-weight:bold;
+}
+
+/* FEED */
+
+.feed{
+display:flex;
+flex-direction:column;
+gap:25px;
+}
+
+/* PUBLICACIONES */
+
+.post{
+background:white;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,.05);
+overflow:hidden;
+}
+
+.post-header{
+padding:12px;
+font-weight:bold;
+}
+
+.post img{
+width:100%;
+height:300px;
+object-fit:cover;
+}
+
+.post-actions{
+padding:10px;
+font-size:1.2rem;
+}
+
+/* SIDEBAR DERECHA */
+
+.rightbar{
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,.05);
+height:fit-content;
+}
+
+.rightbar h3{
+margin-bottom:10px;
+}
+
+.plant{
+padding:8px;
+border-bottom:1px solid #eee;
+}
+
+.plant:last-child{
+border:none;
+}
+
+button{
+margin-top:15px;
+padding:10px;
+border:none;
+border-radius:8px;
+background:#ff2a7f;
+color:white;
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+background:#e91e63;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">🌸 Appiu</div>
+
+<nav>
+<ul>
+<li><a href="menu.html">Inicio</a></li>
+<li><a href="perfil.html">Perfil</a></li>
+<li><a href="publicar.html">Publicar</a></li>
+<li><a href="plantas.html">Explorar plantas</a></li>
+</ul>
+</nav>
+
+</header>
+
+
+<div class="container">
+
+<!-- PERFIL -->
+
+<div class="sidebar">
+
+<img src="https://i.pravatar.cc/10" class="profile-img">
+
+<div class="username" id="bienvenida"></div>
+
+<a href="perfil.html" class="btn">Perfil</a>
+
+</div>
+
+
+
+<!-- FEED -->
+
+<div class="feed" id="feed"></div>
+
+
+<!-- PLANTAS -->
+
+<div class="rightbar">
+
+<h3>🌿 Plantas populares</h3>
+
+<div class="plant">Monstera</div>
+<div class="plant">Lavanda</div>
+<div class="plant">Orquídea</div>
+<div class="plant">Aloe Vera</div>
+
+<a href="plantas.html" class="btn">Explorar plantas</a>
+
+</div>
+
+</div>
+
+
+<script>
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+window.location.href="login.html";
+}else{
+document.getElementById("bienvenida").textContent = "@" + user.username;
+}
+
+
+/* CARGAR PUBLICACIONES */
+
+async function cargarPublicaciones(){
+
+const res = await fetch("/api/publicaciones");
+const publicaciones = await res.json();
+
+const feed = document.getElementById("feed");
+
+feed.innerHTML="";
+
+publicaciones.reverse().forEach((post,i)=>{
+
+feed.innerHTML+=`
+
+<div class="post">
+
+<div class="post-header">
+
+<a href="perfil.html?user=${post.usuario}">
+<b>${post.usuario}</b>
+</a>
+
+</div>
+
+<img src="${post.imagen}">
+
+<div style="padding:10px">
+
+<h3>${post.titulo || ""}</h3>
+<p>${post.descripcion || ""}</p>
+
+</div>
+
+<div class="post-actions">
+
+<span onclick="like(${i})">
+❤️ <span id="likes-${i}">${post.likes || 0}</span>
+</span>
+
+<span onclick="mostrarComentarios(${i})">💬</span>
+
+</div>
+
+<div id="comentarios-${i}" style="padding:10px"></div>
+
+<input
+placeholder="Escribir comentario..."
+onkeypress="comentar(event,${i})"
+style="width:100%;padding:8px;border:none;border-top:1px solid #eee"
+>
+
+</div>
+
+`;
+
+});
+
+}
+
+cargarPublicaciones();
+
+
+/* LIKES */
+
+async function like(id){
+
+await fetch("/api/like/"+id,{
+method:"POST"
+});
+
+cargarPublicaciones();
+
+}
+
+
+/* COMENTARIOS */
+
+let comentarios={};
+
+function comentar(e,id){
+
+if(e.key==="Enter"){
+
+let texto=e.target.value;
+
+if(!comentarios[id]) comentarios[id]=[];
+
+comentarios[id].push({
+
+usuario:user.username,
+texto
+
+});
+
+mostrarComentarios(id);
+
+e.target.value="";
+
+}
+
+}
+
+function mostrarComentarios(id){
+
+const cont=document.getElementById("comentarios-"+id);
+
+cont.innerHTML="";
+
+if(comentarios[id]){
+
+comentarios[id].forEach(c=>{
+
+cont.innerHTML+=`
+
+<p><b>${c.usuario}</b>: ${c.texto}</p>
+
+`;
+
+});
+
+}
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Perfil</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#fafafa;
+}
+
+.container{
+width:700px;
+margin:auto;
+margin-top:40px;
+text-align:center;
+}
+
+.posts{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-top:30px;
+}
+
+.posts img{
+width:100%;
+border-radius:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2 id="usuario"></h2>
+
+<div class="posts" id="posts"></div>
+
+</div>
+
+<script>
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+window.location.href="login.html";
+}
+
+document.getElementById("usuario").innerText=user.username;
+
+async function cargarPerfil(){
+
+const res = await fetch("/api/publicaciones");
+const data = await res.json();
+
+const cont=document.getElementById("posts");
+
+data.forEach(p=>{
+
+if(p.usuario===user.username){
+
+cont.innerHTML+=`<img src="${p.imagen}">`;
+
+}
+
+});
+
+}
+
+cargarPerfil();
+
+</script>
+
+</body>
+</html>
