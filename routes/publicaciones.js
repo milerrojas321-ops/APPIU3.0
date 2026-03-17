@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../data/db'); // Tu conexión a la base de datos
+const db = require('../data/db'); 
 const multer = require('multer');
 const path = require('path');
 
 // Configuración de almacenamiento
 const storage = multer.diskStorage({
-    destination: 'public/uploads/', // Asegúrate de que esta carpeta exista
+    destination: 'public/uploads/', 
     filename: (req, file, cb) => {
         cb(null, Date.now() + path.extname(file.originalname));
     }
@@ -14,31 +14,20 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Aplica el middleware 'upload.single' en la ruta
-router.post('/crear', upload.single('image'), async (req, res) => {
+// 1. Ruta para OBTENER todas las publicaciones
+router.get('/', async (req, res) => {
     try {
-        const { user_id, username, content, plant_name } = req.body;
-        const image_url = req.file ? `/uploads/${req.file.filename}` : null;
-
-        // Si alguna de estas variables es undefined, MySQL dará error 500
-        const query = 'INSERT INTO posts (user_id, username, content, plant_name, image_url) VALUES (?, ?, ?, ?, ?)';
-        await db.query(query, [user_id, username, content, plant_name, image_url]);
-
-        res.status(201).json({ success: true });
+        const [rows] = await db.query('SELECT * FROM posts ORDER BY created_at DESC');
+        res.json(rows);
     } catch (error) {
-        console.error(error); // ESTO TE DIRÁ EL ERROR REAL EN LA CONSOLA DE VS CODE
-        res.status(500).send(error.message);
+        res.status(500).json({ error: error.message });
     }
 });
 
-
-// 2. Ruta para CREAR publicación (Recibe el FormData)
-// El nombre 'image' debe ser igual al que pusiste en formData.append('image', ...)
+// 2. Ruta para CREAR publicación
 router.post('/crear', upload.single('image'), async (req, res) => {
     try {
         const { user_id, username, content, plant_name } = req.body;
-        
-        // Si el usuario subió foto, usamos la ruta del archivo, si no, null
         const image_url = req.file ? `/uploads/${req.file.filename}` : null;
 
         const query = 'INSERT INTO posts (user_id, username, content, plant_name, image_url) VALUES (?, ?, ?, ?, ?)';
@@ -51,66 +40,42 @@ router.post('/crear', upload.single('image'), async (req, res) => {
     }
 });
 
-// 3. Ruta para OBTENER las publicaciones
-router.get('/', async (req, res) => {
-    try {
-        const [rows] = await db.query('SELECT * FROM posts ORDER BY created_at DESC');
-        res.json(rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
+// 3. Ruta para LIKES
 router.post('/:id/like', async (req, res) => {
     const postId = req.params.id;
     const { user_id } = req.body;
 
     try {
-        // 1. Verificar si el usuario ya le dio like a este post
         const [existe] = await db.query(
             'SELECT * FROM post_likes WHERE user_id = ? AND post_id = ?', 
             [user_id, postId]
         );
 
         if (existe.length > 0) {
-            // CASO A: EL LIKE YA EXISTE -> VAMOS A QUITARLO (Toggle Off)
-            
-            // Borramos de la tabla de relaciones
-            await db.query(
-                'DELETE FROM post_likes WHERE user_id = ? AND post_id = ?', 
-                [user_id, postId]
-            );
-
-            // Restamos 1 al contador global del post
-            await db.query(
-                'UPDATE posts SET likes = likes - 1 WHERE id = ?', 
-                [postId]
-            );
-
-            res.json({ success: true, action: 'removed', message: "Like retirado" });
-
+            await db.query('DELETE FROM post_likes WHERE user_id = ? AND post_id = ?', [user_id, postId]);
+            await db.query('UPDATE posts SET likes = likes - 1 WHERE id = ?', [postId]);
+            res.json({ success: true, action: 'removed' });
         } else {
-            // CASO B: EL LIKE NO EXISTE -> VAMOS A PONERLO (Toggle On)
-            
-            // Insertamos la relación
-            await db.query(
-                'INSERT INTO post_likes (user_id, post_id) VALUES (?, ?)', 
-                [user_id, postId]
-            );
-
-            // Sumamos 1 al contador global del post
-            await db.query(
-                'UPDATE posts SET likes = likes + 1 WHERE id = ?', 
-                [postId]
-            );
-
-            res.json({ success: true, action: 'added', message: "Like añadido" });
+            await db.query('INSERT INTO post_likes (user_id, post_id) VALUES (?, ?)', [user_id, postId]);
+            await db.query('UPDATE posts SET likes = likes + 1 WHERE id = ?', [postId]);
+            res.json({ success: true, action: 'added' });
         }
-
     } catch (error) {
-        console.error("Error en el sistema de likes:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
+
+// 4. Ruta para OBTENER COMENTARIOS (CORREGIDA)
+router.get('/:id/comentarios', async (req, res) => {
+    const idPublicacion = req.params.id;
+    try {
+        // Asegúrate de que tu tabla se llame 'comments' o cámbialo aquí
+        const [rows] = await db.query('SELECT * FROM comments WHERE post_id = ?', [idPublicacion]);
+        res.json(rows);
+    } catch (error) {
+        console.error("Error al obtener comentarios:", error);
+        res.status(500).json({ error: "Error al cargar comentarios" });
+    }
+});
+
 module.exports = router;
