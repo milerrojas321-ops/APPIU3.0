@@ -6,6 +6,7 @@
     <title>Mi Perfil | Appiu</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/responsive.css">
     <style>
         :root {
             --primary: #1a4d2e;
@@ -158,7 +159,12 @@
 <body>
 
     <header>
-        <a href="menu.html" class="logo">App<span>iu</span></a>
+        <div class="logo-container">
+        <div class="logo-placeholder">
+            <i class="fa-solid fa-seedling" style="color: var(--secundario);"></i>
+        </div>
+        <span class="brand-name">Appiu</span>
+        </div>
         <div class="nav-icons">
             <a href="menu.html" title="Inicio"><i class="fa-solid fa-house"></i></a>
             <a href="#" title="Cerrar Sesión" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i></a>
