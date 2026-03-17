@@ -1,138 +1,125 @@
 // -------------------- IMPORTAR DEPENDENCIAS --------------------
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
+// Eliminamos 'fs' para usuarios porque ahora usamos la BD
+const rutasUsuarios = require('./routes/usuarios');
+const db = require('./data/db'); 
+const multer = require('multer');
 
 const app = express();
 const PORT = 3650;
 
+// Configuración de almacenamiento para fotos de perfil
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/'); // Asegúrate de que esta carpeta exista
+    },
+    filename: (req, file, cb) => {
+        // Guardamos la foto con el nombre: perfil-ID-Fecha.jpg
+        cb(null, `perfil-${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+
+const upload = multer({ storage: storage }); // AQUÍ SE DEFINE LA VARIABLE 'upload'
+
+// Verificar conexión a MySQL al iniciar
+db.query('SELECT 1')
+    .then(() => console.log('✅ Conexión a MySQL exitosa (Appiu DB)'))
+    .catch(err => console.error('❌ Error en MySQL:', err.message));
+
 // -------------------- MIDDLEWARE --------------------
-app.use(express.json()); // Para manejar JSON en requests
-app.use(express.static(path.join(__dirname, 'public'))); // Archivos estáticos
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public'))); 
 
 // -------------------- VISTAS --------------------
-// Ruta principal -> redirige a registro.html
 app.get('/', (req, res) => {
+  // Ajustado a la ruta de tu repositorio
   res.sendFile(path.join(__dirname, 'public', 'registro.html'));
 });
 
-// -------------------- API REST: PRODUCTOS --------------------
+// -------------------- API REST: USUARIOS (CONECTADO A BD) --------------------
 
-// Obtener todos los productos (GET)
-app.get('/api/productos', (req, res) => {
-  const productos = JSON.parse(fs.readFileSync('./data/productos.json', 'utf8'));
-  res.json(productos);
+// Usamos el archivo de rutas que ya configuramos con MySQL
+app.use('/auth', rutasUsuarios);
+
+app.use('/api/publicaciones', require('./routes/publicaciones'));
+
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// -------------------- API REST: PUBLICACIONES (POR IMPLEMENTAR EN BD) --------------------
+
+// Nota: He mantenido estas rutas pero deberíamos moverlas a /routes/posts.js 
+// para seguir usando MySQL en lugar de publicaciones.json pronto.
+app.get('/api/publicaciones', async (req, res) => {
+    try {
+        const [rows] = await db.query('SELECT * FROM posts ORDER BY created_at DESC');
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Registrar un nuevo producto (POST)
-app.post('/api/productos', (req, res) => {
-  const productos = JSON.parse(fs.readFileSync('./data/productos.json', 'utf8'));
-  const nuevoProducto = {
-    id: productos.length + 1,
-    nombre: req.body.nombre,
-    precio: req.body.precio,
-    cantidad: req.body.cantidad
-  };
-  productos.push(nuevoProducto);
-  fs.writeFileSync('./data/productos.json', JSON.stringify(productos, null, 2));
-  res.status(201).json(nuevoProducto);
+// Ruta para obtener todos los usuarios (Sugerencias)
+app.get('/api/usuarios', async (req, res) => {
+    try {
+        // Traemos todos los usuarios de la base de datos
+        const [rows] = await db.query('SELECT id, username FROM users'); 
+        res.json(rows);
+    } catch (error) {
+        console.error("Error al obtener usuarios:", error);
+        res.status(500).json({ error: "Error al cargar sugerencias" });
+    }
 });
 
-// Actualizar un producto (PATCH)
-app.patch('/api/productos/:id', (req, res) => {
-  let productos = JSON.parse(fs.readFileSync('./data/productos.json', 'utf8'));
-  const productoId = parseInt(req.params.id);
-  const producto = productos.find(p => p.id === productoId);
-
-  if (!producto) {
-    return res.status(404).json({ error: "Producto no encontrado" });
-  }
-
-  if (req.body.nombre) producto.nombre = req.body.nombre;
-  if (req.body.precio) producto.precio = req.body.precio;
-  if (req.body.cantidad) producto.cantidad = req.body.cantidad;
-
-  fs.writeFileSync('./data/productos.json', JSON.stringify(productos, null, 2));
-  res.json(producto);
+// Ruta para procesar el seguimiento
+app.post('/api/usuarios/follow', async (req, res) => {
+    const { seguidor_id, seguido_id } = req.body;
+    try {
+        const [existe] = await db.query('SELECT * FROM seguidores WHERE seguidor_id = ? AND seguido_id = ?', [seguidor_id, seguido_id]);
+        
+        if (existe.length > 0) {
+            await db.query('DELETE FROM seguidores WHERE seguidor_id = ? AND seguido_id = ?', [seguidor_id, seguido_id]);
+            res.json({ action: 'unfollowed' });
+        } else {
+            await db.query('INSERT INTO seguidores (seguidor_id, seguido_id) VALUES (?, ?)', [seguidor_id, seguido_id]);
+            res.json({ action: 'followed' });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
-// Eliminar un producto (DELETE)
-app.delete('/api/productos/:id', (req, res) => {
-  let productos = JSON.parse(fs.readFileSync('./data/productos.json', 'utf8'));
-  const productoId = parseInt(req.params.id);
-  const nuevosProductos = productos.filter(p => p.id !== productoId);
+// Ruta para editar perfil y subir foto
+app.post('/api/usuarios/editar', upload.single('foto'), async (req, res) => {
+    const { id, nombre } = req.body;
+    let fotoUrl = null;
 
-  if (productos.length === nuevosProductos.length) {
-    return res.status(404).json({ error: "Producto no encontrado" });
-  }
-
-  fs.writeFileSync('./data/productos.json', JSON.stringify(nuevosProductos, null, 2));
-  res.json({ mensaje: "Producto eliminado con éxito" });
+    try {
+        if (req.file) {
+            fotoUrl = `/uploads/${req.file.filename}`;
+            await db.query('UPDATE users SET nombre_completo = ?, foto_perfil = ? WHERE id = ?', [nombre, fotoUrl, id]);
+        } else {
+            await db.query('UPDATE users SET nombre_completo = ? WHERE id = ?', [nombre, id]);
+        }
+        res.json({ success: true, foto_url: fotoUrl });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// -------------------- API REST: USUARIOS --------------------
-
-// Registrar usuario (POST)
-app.post('/api/usuarios', (req, res) => {
-  const usuarios = JSON.parse(fs.readFileSync('./data/usuarios.json', 'utf8'));
-  const nuevoUsuario = {
-    id: usuarios.length + 1,
-    username: req.body.username,
-    password: req.body.password
-  };
-  usuarios.push(nuevoUsuario);
-  fs.writeFileSync('./data/usuarios.json', JSON.stringify(usuarios, null, 2));
-  res.status(201).json({ success: true, mensaje: "Usuario registrado con éxito" });
+// La ruta de contadores que ya tenías (ASEGÚRATE QUE ESTÉ EN server.js, NO EN EL HTML)
+app.get('/api/usuarios/contadores/:id', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        const [seguidores] = await db.query('SELECT COUNT(*) as total FROM seguidores WHERE seguido_id = ?', [userId]);
+        const [seguidos] = await db.query('SELECT COUNT(*) as total FROM seguidores WHERE seguidor_id = ?', [userId]);
+        res.json({ seguidores: seguidores[0].total, seguidos: seguidos[0].total });
+    } catch (e) { res.status(500).json(e); }
 });
 
-// Consultar usuarios (GET)
-app.get('/api/usuarios', (req, res) => {
-  const usuarios = JSON.parse(fs.readFileSync('./data/usuarios.json', 'utf8'));
-  res.json(usuarios);
-});
-
-// Login de usuario (POST)
-app.post('/api/login', (req, res) => {
-  const usuarios = JSON.parse(fs.readFileSync('./data/usuarios.json', 'utf8'));
-  const { username, password } = req.body;
-
-  const user = usuarios.find(u => u.username === username && u.password === password);
-
-  if (user) {
-    res.json({ success: true, mensaje: 'Login exitoso', user });
-  } else {
-    res.status(401).json({ success: false, mensaje: 'Credenciales incorrectas' });
-  }
-});
-
-// Obtener publicaciones
-app.get('/api/publicaciones', (req, res) => {
-  const publicaciones = JSON.parse(fs.readFileSync('./data/publicaciones.json', 'utf8'));
-  res.json(publicaciones);
-});
-
-// Crear publicación
-app.post('/api/publicaciones', (req, res) => {
-
-  const publicaciones = JSON.parse(fs.readFileSync('./data/publicaciones.json', 'utf8'));
-
-  const nueva = {
-    id: publicaciones.length + 1,
-    usuario: req.body.usuario,
-    titulo: req.body.titulo,
-    descripcion: req.body.descripcion,
-    imagen: req.body.imagen || "https://images.unsplash.com/photo-1501004318641-b39e6451bec6"
-  };
-
-  publicaciones.push(nueva);
-
-  fs.writeFileSync('./data/publicaciones.json', JSON.stringify(publicaciones,null,2));
-
-  res.status(201).json(nueva);
-
-});
 
 // -------------------- INICIAR SERVIDOR --------------------
 app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en: http://localhost:${PORT}`);
+  console.log(`✅ Servidor de Appiu corriendo en: http://localhost:${PORT}`);
 });

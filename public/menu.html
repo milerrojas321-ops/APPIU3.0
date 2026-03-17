@@ -1,380 +1,338 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Appiu</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appiu | Comunidad Botánica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a4d2e;
+            --primary-light: #eefdf5;
+            --accent: #ff4d94;
+            --bg: #f0f4f2;
+            --white: #ffffff;
+            --text: #0d2117;
+            --text-light: #5c7167;
+            --sidebar-width: 280px;
+            --right-panel-width: 320px;
+            --shadow-soft: 0 10px 30px rgba(0,0,0,0.05);
+        }
 
-<style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; overflow-x: hidden; }
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family: 'Segoe UI', sans-serif;
-}
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-width); height: 100vh; background: var(--white);
+            position: fixed; padding: 40px 25px; display: flex; flex-direction: column;
+            border-right: 1px solid rgba(0,0,0,0.06); z-index: 100;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 50px; }
+        .logo-img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; }
+        .logo-text { font-size: 1.8rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
 
-body{
-background:#fafafa;
-}
+        .nav-menu { list-style: none; flex-grow: 1; }
+        .nav-item { 
+            padding: 16px 20px; border-radius: 16px; margin-bottom: 10px;
+            cursor: pointer; transition: 0.3s; color: var(--text-light);
+            display: flex; align-items: center; gap: 18px; font-weight: 600;
+        }
+        .nav-item:hover { background: var(--primary-light); color: var(--primary); }
+        .nav-item.active { background: var(--primary); color: white; }
 
-/* HEADER */
+        /* CONTENIDO PRINCIPAL */
+        main { 
+            margin-left: var(--sidebar-width); 
+            margin-right: var(--right-panel-width);
+            width: 100%; padding: 40px; display: flex; flex-direction: column; align-items: center; 
+        }
 
-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:15px 40px;
-background:white;
-border-bottom:1px solid #ddd;
-position:sticky;
-top:0;
-z-index:10;
-}
+        /* BANNER HERO */
+        .hero-banner {
+            width: 100%; max-width: 700px; height: 180px;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&q=80&w=1000');
+            background-size: cover; background-position: center;
+            border-radius: 30px; margin-bottom: 40px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; text-align: center; padding: 20px;
+            box-shadow: 0 15px 35px rgba(26, 77, 46, 0.2);
+        }
+        .hero-banner h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
+        .hero-banner p { font-style: italic; opacity: 0.9; font-size: 1rem; }
 
-.logo{
-font-size:1.7rem;
-font-weight:bold;
-color:#ff2a7f;
-}
+        .feed-container { max-width: 600px; width: 100%; }
 
-/* NAVBAR */
+        /* SUGERENCIAS (DERECHA) */
+        .right-panel {
+            width: var(--right-panel-width); height: 100vh;
+            position: fixed; right: 0; padding: 40px 25px;
+            background: var(--bg); border-left: 1px solid rgba(0,0,0,0.05);
+        }
+        .suggestions-card {
+            background: var(--white); border-radius: 24px; padding: 25px;
+            box-shadow: var(--shadow-soft);
+        }
+        .suggestions-card h3 { font-size: 1.1rem; margin-bottom: 20px; color: var(--primary); }
+        
+        .user-suggest { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .user-suggest-info { display: flex; align-items: center; gap: 10px; }
+        .user-suggest img { width: 35px; height: 35px; border-radius: 10px; background: #eee; }
+        .btn-follow { 
+            color: var(--primary); font-weight: 800; font-size: 0.85rem; 
+            cursor: pointer; border: none; background: none; 
+        }
 
-nav ul{
-display:flex;
-list-style:none;
-gap:25px;
-}
+        /* POST CARD */
+        .post-card {
+            background: var(--white); border-radius: 32px; margin-bottom: 40px;
+            box-shadow: var(--shadow-soft); overflow: hidden;
+        }
+        .post-header { padding: 20px 25px; display: flex; align-items: center; gap: 15px; }
+        .user-pfp { width: 48px; height: 48px; border-radius: 18px; object-fit: cover; }
+        .post-image { width: 100%; max-height: 550px; object-fit: cover; display: block; }
+        .post-body { padding: 25px; }
+        .post-footer { padding: 0 25px 25px; display: flex; gap: 30px; }
 
-nav a{
-text-decoration:none;
-color:#333;
-font-weight:600;
-transition:.2s;
-}
+        /* PANEL COMENTARIOS */
+        .comments-panel {
+            position: fixed; right: -400px; top: 0; width: 400px; height: 100vh;
+            background: white; z-index: 1000; transition: 0.4s;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .comments-panel.active { right: 0; }
+        .comments-header { padding: 25px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
+        .comments-list { flex-grow: 1; overflow-y: auto; padding: 20px; }
 
-nav a:hover{
-color:#ff2a7f;
-}
-
-/* BOTON DE EXPLORAR PLANTA */
-
-.btn{
-display:inline-block;
-margin-top:15px;
-padding:10px 20px;
-border-radius:8px;
-background:#ff2a7f;
-color:white;
-font-weight:bold;
-text-decoration:none;
-transition:.2s;
-}
-
-.btn:hover{
-background:#e91e63;
-}
-
-/* CONTENEDOR PRINCIPAL */
-
-.container{
-display:grid;
-grid-template-columns: 250px 1fr 250px;
-gap:30px;
-padding:30px;
-}
-
-/* SIDEBAR PERFIL */
-
-.sidebar{
-background:white;
-padding:20px;
-border-radius:12px;
-box-shadow:0 5px 15px rgba(0,0,0,.05);
-text-align:center;
-height:fit-content;
-}
-
-.profile-img{
-width:80px;
-height:80px;
-border-radius:50%;
-object-fit:cover;
-margin-bottom:10px;
-}
-
-.username{
-font-weight:bold;
-}
-
-/* FEED */
-
-.feed{
-display:flex;
-flex-direction:column;
-gap:25px;
-}
-
-/* PUBLICACIONES */
-
-.post{
-background:white;
-border-radius:12px;
-box-shadow:0 5px 15px rgba(0,0,0,.05);
-overflow:hidden;
-}
-
-.post-header{
-padding:12px;
-font-weight:bold;
-}
-
-.post img{
-width:100%;
-height:300px;
-object-fit:cover;
-}
-
-.post-actions{
-padding:10px;
-font-size:1.2rem;
-}
-
-/* SIDEBAR DERECHA */
-
-.rightbar{
-background:white;
-padding:20px;
-border-radius:12px;
-box-shadow:0 5px 15px rgba(0,0,0,.05);
-height:fit-content;
-}
-
-.rightbar h3{
-margin-bottom:10px;
-}
-
-.plant{
-padding:8px;
-border-bottom:1px solid #eee;
-}
-
-.plant:last-child{
-border:none;
-}
-
-button{
-margin-top:15px;
-padding:10px;
-border:none;
-border-radius:8px;
-background:#ff2a7f;
-color:white;
-cursor:pointer;
-font-weight:bold;
-}
-
-button:hover{
-background:#e91e63;
-}
-
-</style>
+        /* MODAL */
+        .modal {
+            display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 33, 23, 0.8); backdrop-filter: blur(8px); align-items: center; justify-content: center;
+        }
+        .modal-content { background: white; padding: 40px; border-radius: 35px; width: 90%; max-width: 550px; }
+    </style>
 </head>
-
 <body>
 
-<header>
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="./img/Logo para Joyería Minimalista Neutral.jpg" alt="" class="logo-img"> 
+            <div class="logo-text">Appiu</div>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item active"><i class="fa-solid fa-house"></i> Inicio</li>
+            <li class="nav-item" onclick="location.href='plantas.html'"><i class="fa-solid fa-compass"></i> Explorar plantas</li>
+            <li class="nav-item"><i class="fa-solid fa-leaf"></i> Mi Jardín</li>
+            <li class="nav-item" onclick="location.href='perfil.html'"><i class="fa-solid fa-user"></i> Mi Perfil</li>
+            <li class="nav-item" onclick="logout()" style="margin-top: auto; color: #ff6b6b;"><i class="fa-solid fa-right-from-bracket"></i> Salir</li>
+        </ul>
+        <button style="background: var(--primary); color:white; border:none; padding:18px; border-radius:20px; font-weight:800; cursor:pointer;" onclick="openModal()">
+            <i class="fa-solid fa-plus-circle"></i> Publicar
+        </button>
+    </aside>
 
-<div class="logo">🌸 Appiu</div>
+    <main>
+        <div class="hero-banner">
+            <h1>Plantar es creer en el mañana</h1>
+            <p>"La naturaleza no hace nada incompleto, ni nada en vano"</p>
+        </div>
 
-<nav>
-<ul>
-<li><a href="menu.html">Inicio</a></li>
-<li><a href="perfil.html">Perfil</a></li>
-<li><a href="publicar.html">Publicar</a></li>
-<li><a href="plantas.html">Explorar plantas</a></li>
-</ul>
-</nav>
+        <div class="feed-container" id="feed-dinamico"></div>
+    </main>
 
-</header>
+    <div class="right-panel">
+        <div class="suggestions-card">
+            <h3>Sugerencias para ti</h3>
+            <div id="lista-sugerencias">
+                </div>
+        </div>
+        <p style="font-size: 0.75rem; color: #888; margin-top: 20px; padding: 0 10px;">
+            © 2024 Appiu de Tecnólogo. <br> Donde cada brote cuenta una historia.
+        </p>
+    </div>
 
+    <div class="comments-panel" id="commentsPanel">
+        <div class="comments-header">
+            <h3>Comentarios</h3>
+            <i class="fa-solid fa-xmark" onclick="closeComments()" style="cursor:pointer;"></i>
+        </div>
+        <div class="comments-list" id="commentsList"></div>
+        <form style="padding:20px; border-top:1px solid #eee; display:flex; gap:10px;" id="form-comentario">
+            <input type="text" id="comment-text" placeholder="Escribe algo..." required style="flex-grow:1; border:none; background:#f0f4f2; padding:12px; border-radius:20px; outline:none;">
+            <button type="submit" style="background:none; border:none; color:var(--primary); font-weight:800; cursor:pointer;">Enviar</button>
+        </form>
+    </div>
 
-<div class="container">
+    <div class="modal" id="modalPost">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 25px; color: var(--primary);">Compartir un Brote</h2>
+            <form id="form-publicar">
+                <input type="text" id="plant-name" placeholder="Nombre de tu planta" required style="width:100%; padding:15px; margin-bottom:15px; border-radius:15px; border:1px solid #eee;">
+                <textarea id="post-content" placeholder="¿Qué quieres contarnos?" required style="width:100%; height:120px; padding:15px; margin-bottom:15px; border-radius:15px; border:1px solid #eee; resize:none;"></textarea>
+                <input type="file" id="image-file" accept="image/*" required style="margin-bottom:20px;">
+                <button type="submit" style="background:var(--primary); color:white; border:none; padding:15px; border-radius:15px; width:100%; font-weight:800; cursor:pointer;">Publicar 🌿</button>
+            </form>
+        </div>
+    </div>
 
-<!-- PERFIL -->
+    <script>
+        const user = JSON.parse(localStorage.getItem("user"));
+        if(!user) window.location.href = "login.html";
 
-<div class="sidebar">
+        let currentPostId = null;
 
-<img src="https://i.pravatar.cc/10" class="profile-img">
+        function openModal() { document.getElementById('modalPost').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modalPost').style.display = 'none'; }
+        function closeComments() { document.getElementById('commentsPanel').classList.remove('active'); }
 
-<div class="username" id="bienvenida"></div>
+        async function cargarFeed() {
+            const feed = document.getElementById("feed-dinamico");
+            try {
+                const res = await fetch("/api/publicaciones");
+                const posts = await res.json();
+                feed.innerHTML = "";
+                posts.forEach(post => {
+                    feed.innerHTML += `
+                        <article class="post-card">
+                            <div class="post-header">
+                                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${post.username}" class="user-pfp">
+                                <div><b>${post.username}</b><small style="color:#888; display:block; font-size:0.75rem;">${new Date(post.created_at).toLocaleDateString()}</small></div>
+                            </div>
+                            <img src="${post.image_url}" class="post-image">
+                            <div class="post-body">
+                                <h4 style="color:var(--primary)">🌿 ${post.plant_name}</h4>
+                                <p>${post.content}</p>
+                            </div>
+                            <div class="post-footer">
+                                <div onclick="darLike(${post.id})" style="cursor:pointer; font-weight:800;"><i class="fa-solid fa-heart"></i> ${post.likes || 0}</div>
+                                <div onclick="abrirComentarios(${post.id})" style="cursor:pointer; font-weight:800;"><i class="fa-solid fa-comment"></i> Comentar</div>
+                            </div>
+                        </article>
+                    `;
+                });
+            } catch (e) { feed.innerHTML = "Error al cargar."; }
+        }
 
-<a href="perfil.html" class="btn">Perfil</a>
+        async function cargarSugerencias() {
+    const lista = document.getElementById("lista-sugerencias");
+    try {
+        const res = await fetch("/api/usuarios"); 
+        const usuarios = await res.json();
+        
+        lista.innerHTML = ""; // Limpiamos el cargando
+        
+        // Filtramos para que NO aparezcas tú mismo en las sugerencias
+        const otrosUsuarios = usuarios.filter(u => u.username !== user.username);
 
-</div>
+        // Si no hay otros usuarios todavía
+        if (otrosUsuarios.length === 0) {
+            lista.innerHTML = "<p style='font-size:0.8rem; color:grey;'>No hay más brotes por ahora...</p>";
+            return;
+        }
 
-
-
-<!-- FEED -->
-
-<div class="feed" id="feed"></div>
-
-
-<!-- PLANTAS -->
-
-<div class="rightbar">
-
-<h3>🌿 Plantas populares</h3>
-
-<div class="plant">Monstera</div>
-<div class="plant">Lavanda</div>
-<div class="plant">Orquídea</div>
-<div class="plant">Aloe Vera</div>
-
-<a href="plantas.html" class="btn">Explorar plantas</a>
-
-</div>
-
-</div>
-
-
-<script>
-
-const user = JSON.parse(localStorage.getItem("user"));
-
-if(!user){
-window.location.href="login.html";
-}else{
-document.getElementById("bienvenida").textContent = "@" + user.username;
+        // Mostramos máximo 5 sugerencias de forma aleatoria o los primeros
+        otrosUsuarios.slice(0, 5).forEach(u => {
+            lista.innerHTML += `
+                <div class="user-suggest" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                    <div class="user-suggest-info" style="display: flex; align-items: center; gap: 10px;">
+                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}" style="width: 35px; height: 35px; border-radius: 10px; background: #eee;">
+                        <b style="font-size:0.85rem;">${u.username}</b>
+                    </div>
+                    <button class="btn-follow" onclick="followUser(${u.id})">Seguir</button>
+                </div>
+            `;
+        });
+    } catch (e) {
+        console.error("Error cargando sugerencias:", e);
+        lista.innerHTML = "<p>Error al cargar usuarios</p>";
+    }
 }
 
+        async function abrirComentarios(postId) {
+            currentPostId = postId;
+            document.getElementById('commentsPanel').classList.add('active');
+            cargarComentarios(postId);
+        }
 
-/* CARGAR PUBLICACIONES */
+        async function cargarComentarios(postId) {
+            const list = document.getElementById('commentsList');
+            list.innerHTML = "Cargando...";
+            const res = await fetch(`/api/publicaciones/${postId}/comentarios`);
+            const comments = await res.json();
+            list.innerHTML = "";
+            comments.forEach(c => {
+                list.innerHTML += `<div style="margin-bottom:15px;"><b style="font-size:0.85rem;">${c.username}</b><p style="font-size:0.9rem;">${c.texto}</p></div>`;
+            });
+        }
 
-async function cargarPublicaciones(){
+        document.getElementById('form-comentario').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const texto = document.getElementById('comment-text').value;
+            await fetch(`/api/publicaciones/${currentPostId}/comentario`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: user.id, username: user.username, texto })
+            });
+            document.getElementById('comment-text').value = "";
+            cargarComentarios(currentPostId);
+        });
 
-const res = await fetch("/api/publicaciones");
-const publicaciones = await res.json();
+        document.getElementById('form-publicar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('user_id', user.id);
+            formData.append('username', user.username);
+            formData.append('plant_name', document.getElementById('plant-name').value);
+            formData.append('content', document.getElementById('post-content').value);
+            formData.append('image', document.getElementById('image-file').files[0]);
 
-const feed = document.getElementById("feed");
+            await fetch('/api/publicaciones/crear', { method: 'POST', body: formData });
+            closeModal();
+            cargarFeed();
+        });
 
-feed.innerHTML="";
+        async function darLike(postId) {
+            await fetch(`/api/publicaciones/${postId}/like`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: user.id })
+            });
+            cargarFeed();
+        }
 
-publicaciones.reverse().forEach((post,i)=>{
+        function logout() { localStorage.clear(); window.location.href = "login.html"; }
+        
+        cargarFeed();
+        cargarSugerencias();
 
-feed.innerHTML+=`
+        async function followUser(seguidoId) {
+    try {
+        const res = await fetch('/api/usuarios/follow', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                seguidor_id: user.id, 
+                seguido_id: seguidoId 
+            })
+        });
 
-<div class="post">
-
-<div class="post-header">
-
-<a href="perfil.html?user=${post.usuario}">
-<b>${post.usuario}</b>
-</a>
-
-</div>
-
-<img src="${post.imagen}">
-
-<div style="padding:10px">
-
-<h3>${post.titulo || ""}</h3>
-<p>${post.descripcion || ""}</p>
-
-</div>
-
-<div class="post-actions">
-
-<span onclick="like(${i})">
-❤️ <span id="likes-${i}">${post.likes || 0}</span>
-</span>
-
-<span onclick="mostrarComentarios(${i})">💬</span>
-
-</div>
-
-<div id="comentarios-${i}" style="padding:10px"></div>
-
-<input
-placeholder="Escribir comentario..."
-onkeypress="comentar(event,${i})"
-style="width:100%;padding:8px;border:none;border-top:1px solid #eee"
->
-
-</div>
-
-`;
-
-});
-
+        if (res.ok) {
+            const data = await res.json();
+            
+            // Esto refresca la lista de sugerencias. 
+            // Si tu backend está bien hecho, el usuario ya no saldrá o saldrá con el texto correcto.
+            cargarSugerencias(); 
+            
+            // Si quieres un cambio instantáneo sin recargar toda la lista:
+            // let btn = event.target; 
+            // btn.innerText = data.action === 'followed' ? 'Seguido' : 'Seguir';
+        }
+    } catch (error) {
+        console.error("Error al conectar:", error);
+    }
 }
 
-cargarPublicaciones();
-
-
-/* LIKES */
-
-async function like(id){
-
-await fetch("/api/like/"+id,{
-method:"POST"
-});
-
-cargarPublicaciones();
-
-}
-
-
-/* COMENTARIOS */
-
-let comentarios={};
-
-function comentar(e,id){
-
-if(e.key==="Enter"){
-
-let texto=e.target.value;
-
-if(!comentarios[id]) comentarios[id]=[];
-
-comentarios[id].push({
-
-usuario:user.username,
-texto
-
-});
-
-mostrarComentarios(id);
-
-e.target.value="";
-
-}
-
-}
-
-function mostrarComentarios(id){
-
-const cont=document.getElementById("comentarios-"+id);
-
-cont.innerHTML="";
-
-if(comentarios[id]){
-
-comentarios[id].forEach(c=>{
-
-cont.innerHTML+=`
-
-<p><b>${c.usuario}</b>: ${c.texto}</p>
-
-`;
-
-});
-
-}
-
-}
-
-</script>
-
+    </script>
 </body>
 </html>
